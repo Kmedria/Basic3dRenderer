@@ -18,19 +18,7 @@ public:
     Graphics();
     ~Graphics();
 
-    const char* vertexShaderSource = "#version 330 core\n"
-        "out vec4 FragColor;\n\n"
-        "layout (location = 0) in vec3 pos;\n\n"
-        "void main() {\n"
-        "   gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);\n"
-        "}\0";
-
-    const char* fragmentShaderSource = "#version 330 core\n"
-        "out vec4 FragColor;\n\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
-        "}\0";
+    const char* shaderSource = "src/Graphics/Shaders/Basic.shader";
 
     float pi = 3.14159f;
     
@@ -42,7 +30,7 @@ public:
     int screenHeight = 1040;
     float aspectRatio = (float)screenHeight / (float)screenWidth;
 
-    int maxSightDistance = 1000*1000;
+    int maxSightDistance = 10*1000;
     int minSightDistance = 0.05 * 1000;
     float fieldOfView = tan(pi*3/4);
 

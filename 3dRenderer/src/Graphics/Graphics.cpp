@@ -20,7 +20,7 @@ int Graphics::init() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL 
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow(screenWidth, screenHeight, "Gamer boi", NULL, NULL);
+    window = glfwCreateWindow(screenWidth, screenHeight, "Mind your own business", NULL, NULL);
     if (window == NULL) {
         fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
         glfwTerminate();
@@ -46,10 +46,42 @@ int Graphics::init() {
 
 void Graphics::run() {
     
+    
+    std::ifstream stream;
+
+    stream.open(shaderSource);
+
+    enum class ShaderType {
+        NONE = -1, VERTEX = 0, FRAGMENT = 1
+    };
+
+    std::string line;
+    std::stringstream ss[3];
+    ShaderType type = ShaderType::NONE;
+    
+    while (getline(stream, line)) {
+        if (line.find("#shader") != std::string::npos) {
+            if (line.find("vertex") != std::string::npos) {
+                type = ShaderType::VERTEX;
+            }
+            else {
+                if (line.find("fragment") != std::string::npos) {
+                    type = ShaderType::FRAGMENT;
+                }
+            }
+        }
+        else {
+            ss[(int)type] << line << '\n';
+        }
+    }
+
     // vertex shader
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    const std::string& vertSTR = ss[0].str();
+    const char* vert = vertSTR.c_str();
+
+    glShaderSource(vertexShader, 1, &vert, NULL);
     glCompileShader(vertexShader);
     // check for shader compile errors
     int success;
@@ -64,7 +96,11 @@ void Graphics::run() {
     // fragment shader
 
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    
+    const std::string& fragSTR = ss[1].str();
+    const char* frag = fragSTR.c_str();
+    
+    glShaderSource(fragmentShader, 1, &frag, NULL);
     glCompileShader(fragmentShader);
     // check for shader compile errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
@@ -88,33 +124,6 @@ void Graphics::run() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    float cubePoints[] = {
-        6.0f, 6.0f, 6.0f,  // top right
-        5.0f, 5.0f, 6.0f,  // bottom right
-        2.0f, 5.0f, 5.0f,  // bottom left
-        //11.0f, 12.0f, 0.0f,   // top left
-        //10.0f, 13.0f, 1.0f,  // top right
-        //10.0f, 13.0f, 0.0f,  // bottom right
-        //10.0f, 12.0f, 1.0f,  // bottom left
-        //10.0f, 12.0f, 0.0f   // top left
-    };
-
-    unsigned int triangles[]{
-        2, 1, 0
-        //0, 6, 4,
-        //0, 2, 6,
-        //0, 1, 3,
-        //0, 3, 2,
-        //0, 1, 5,
-        //0, 5, 4,
-        //2, 3, 7,
-        //2, 7, 6,
-        //1, 7, 5,
-        //1, 3, 7,
-        //4, 5, 7,
-        //4, 7, 6
-    };
-
     mat4x4 projectionMat;
     for (int index = 0; index < 4; index++) {
         for (int index2 = 0; index < 4; index++) {
@@ -131,7 +140,7 @@ void Graphics::run() {
     projectionMat.data[3][3] = 0;
     */
     
-    float x = -0.5*1000, y = -0.5*1000, z = 100;
+    float x = -500, y = -500, z = 100;
 
     projectionMat.data[0][0] = aspectRatio * fieldOfView;
     projectionMat.data[1][1] = fieldOfView;
@@ -141,7 +150,6 @@ void Graphics::run() {
     projectionMat.data[3][1] = y * fieldOfView;
     projectionMat.data[3][2] = z * (maxSightDistance / (maxSightDistance - minSightDistance)) - ((float)minSightDistance * maxSightDistance) / (maxSightDistance - minSightDistance);
     projectionMat.data[3][3] = z;
-    
     
     Vec3D someTriangle0 = Vec3D(1000.0f, 1000.0f, 1000.0f);
     Vec3D someTriangle1 = Vec3D(1000.0f, 1000.0f, 0.0f);
@@ -160,7 +168,7 @@ void Graphics::run() {
     Vec3D someTriangle13 = Vec3D(0.0f, 1000.0f, 1000.0f);
     Vec3D someTriangle14 = Vec3D(0.0f, 0.0f, 2000.0f);
     Vec3D someTriangle15 = Vec3D(0.0f, 0.0f, 1000.0f);
-
+    
     Vec3D someTriangle16 = Vec3D(1000.0f, 1000.0f, 3000.0f);
     Vec3D someTriangle17 = Vec3D(1000.0f, 1000.0f, 2000.0f);
     Vec3D someTriangle18 = Vec3D(1000.0f, 0.0f, 3000.0f);
@@ -170,31 +178,33 @@ void Graphics::run() {
     Vec3D someTriangle22 = Vec3D(0.0f, 0.0f, 3000.0f);
     Vec3D someTriangle23 = Vec3D(0.0f, 0.0f, 2000.0f);
 
-    Vec3D newTriangle0 = Vec3D();
-    Vec3D newTriangle1 = Vec3D();
-    Vec3D newTriangle2 = Vec3D();
-    Vec3D newTriangle3 = Vec3D();
-    Vec3D newTriangle4 = Vec3D();
-    Vec3D newTriangle5 = Vec3D();
-    Vec3D newTriangle6 = Vec3D();
-    Vec3D newTriangle7 = Vec3D();
-    Vec3D newTriangle8 = Vec3D();
-    Vec3D newTriangle9 = Vec3D();
-    Vec3D newTriangle10 = Vec3D();
-    Vec3D newTriangle11 = Vec3D();
-    Vec3D newTriangle12 = Vec3D();
-    Vec3D newTriangle13 = Vec3D();
-    Vec3D newTriangle14 = Vec3D();
-    Vec3D newTriangle15 = Vec3D();
-    Vec3D newTriangle16 = Vec3D();
-    Vec3D newTriangle17 = Vec3D();
-    Vec3D newTriangle18 = Vec3D();
-    Vec3D newTriangle19 = Vec3D();
-    Vec3D newTriangle20 = Vec3D();
-    Vec3D newTriangle21 = Vec3D();
-    Vec3D newTriangle22 = Vec3D();
-    Vec3D newTriangle23 = Vec3D();
+    Vec3D newTriangle0;
+    Vec3D newTriangle1;
+    Vec3D newTriangle2;
+    Vec3D newTriangle3;
+    Vec3D newTriangle4;
+    Vec3D newTriangle5;
+    Vec3D newTriangle6;
+    Vec3D newTriangle7;
+
+    Vec3D newTriangle8;
+    Vec3D newTriangle9;
+    Vec3D newTriangle10;
+    Vec3D newTriangle11;
+    Vec3D newTriangle12;
+    Vec3D newTriangle13;
+    Vec3D newTriangle14;
+    Vec3D newTriangle15;
     
+    Vec3D newTriangle16;
+    Vec3D newTriangle17;
+    Vec3D newTriangle18;
+    Vec3D newTriangle19;
+    Vec3D newTriangle20;
+    Vec3D newTriangle21;
+    Vec3D newTriangle22;
+    Vec3D newTriangle23;
+
     mutliplyMatVec(someTriangle0, newTriangle0, projectionMat);
     mutliplyMatVec(someTriangle1, newTriangle1, projectionMat);
     mutliplyMatVec(someTriangle2, newTriangle2, projectionMat);
@@ -257,6 +267,37 @@ void Graphics::run() {
         newTriangle23.x, newTriangle23.y, newTriangle23.z
     };
 
+    float vertices2[] = {
+        // 0.5f,  0.5f, 0.0f,  // top right
+        // 0.5f, -0.5f, 0.0f,  // bottom right
+        //-0.5f, -0.5f, 0.0f,  // bottom left
+        //-0.5f,  0.5f, 0.0f   // top left 
+        someTriangle0.x, someTriangle0.y, someTriangle0.z,
+        someTriangle1.x, someTriangle1.y, someTriangle1.z,
+        someTriangle2.x, someTriangle2.y, someTriangle2.z,
+        someTriangle3.x, someTriangle3.y, someTriangle3.z,
+        someTriangle4.x, someTriangle4.y, someTriangle4.z,
+        someTriangle5.x, someTriangle5.y, someTriangle5.z,
+        someTriangle6.x, someTriangle6.y, someTriangle6.z,
+        someTriangle7.x, someTriangle7.y, someTriangle7.z,
+        someTriangle8.x, someTriangle8.y, someTriangle8.z,
+        someTriangle9.x, someTriangle9.y, someTriangle9.z,
+        someTriangle10.x, someTriangle10.y, someTriangle10.z,
+        someTriangle11.x, someTriangle11.y, someTriangle11.z,
+        someTriangle12.x, someTriangle12.y, someTriangle12.z,
+        someTriangle13.x, someTriangle13.y, someTriangle13.z,
+        someTriangle14.x, someTriangle14.y, someTriangle14.z,
+        someTriangle15.x, someTriangle15.y, someTriangle15.z,
+        someTriangle16.x, someTriangle16.y, someTriangle16.z,
+        someTriangle17.x, someTriangle17.y, someTriangle17.z,
+        someTriangle18.x, someTriangle18.y, someTriangle18.z,
+        someTriangle19.x, someTriangle19.y, someTriangle19.z,
+        someTriangle20.x, someTriangle20.y, someTriangle20.z,
+        someTriangle21.x, someTriangle21.y, someTriangle21.z,
+        someTriangle22.x, someTriangle22.y, someTriangle22.z,
+        someTriangle23.x, someTriangle23.y, someTriangle23.z
+    };
+
     unsigned int indices[] = {  // note that we start from 0!
 
         //0, 6, 2, // back face
@@ -302,7 +343,7 @@ void Graphics::run() {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -323,21 +364,62 @@ void Graphics::run() {
     // uncomment this call to draw in wireframe polygons.
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    bool increasing = true, movingAway = true;
+    float num = 0;
+    float speed = 0.1;
+
+    int project_trans_mat1, project_trans_mat2, project_trans_mat3, project_trans_mat4, colourLocation, proj_trans_mat;
+
     while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0, 0, 0, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
         // draw our first triangle
+        proj_trans_mat = glGetUniformLocation(shaderProgram, "project_trans_matrix");
+        colourLocation = glGetUniformLocation(shaderProgram, "u_colour");
+        //project_trans_mat1 = glGetUniformLocation(shaderProgram, "project_trans_matrix1");
+        //project_trans_mat2 = glGetUniformLocation(shaderProgram, "project_trans_matrix2");
+        //project_trans_mat3 = glGetUniformLocation(shaderProgram, "project_trans_matrix3");
+        //project_trans_mat4 = glGetUniformLocation(shaderProgram, "project_trans_matrix4");
         glUseProgram(shaderProgram);
+        glUniform4f(colourLocation, sin(num), sin(num/9), sin(num/3), 1.0f);
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDrawElements(GL_TRIANGLES, 36*2, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 3*36, GL_UNSIGNED_INT, 0);
         // glBindVertexArray(0); // no need to unbind it every time
+        if (num >= 3.14*9) {
+            increasing = false;
+        }
+        else if (num <= 0) {
+            increasing = true;
+        }
+        if (increasing) {
+            num += speed;
+        } else {
+            num -= speed;
+        }
 
+        //glUniform3f(distMoved, -100000, -1000, -1000);
+        //glUniform4f(project_trans_mat1, projectionMat.data[0][0], -1000, -1000, );
+        glUniformMatrix4fv(proj_trans_mat, 1, GL_FALSE, &projectionMat.data[0][0]);
+        if (z>maxSightDistance) {
+            movingAway = false;
+        }
+        else if (z < minSightDistance) {
+            movingAway = true;
+        }
+        if (movingAway){
+            z += 10;
+        }
+        else {
+            z -= 10;
+        }
+        projectionMat.data[3][3] = z;
+        projectionMat.data[3][2] = projectionMat.data[3][3] * (maxSightDistance / (maxSightDistance - minSightDistance)) - ((float)minSightDistance * maxSightDistance) / (maxSightDistance - minSightDistance);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
-        glfwPollEvents();
+        glfwPollEvents();        
     }
 }
 
