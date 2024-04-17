@@ -343,10 +343,10 @@ void Graphics::run() {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), &vertices2, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -371,6 +371,10 @@ void Graphics::run() {
     int project_trans_mat1, project_trans_mat2, project_trans_mat3, project_trans_mat4, colourLocation, proj_trans_mat;
 
     while (!glfwWindowShouldClose(window)) {
+        
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), &vertices2, GL_DYNAMIC_DRAW);
+        
         glClearColor(0, 0, 0, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -385,7 +389,9 @@ void Graphics::run() {
         glUniform4f(colourLocation, sin(num), sin(num/9), sin(num/3), 1.0f);
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //glDrawArrays(GL_TRIANGLES, 0, 6);
+        glUniformMatrix4fv(proj_trans_mat, 1, GL_FALSE, &projectionMat.data[0][0]);
         glDrawElements(GL_TRIANGLES, 3*36, GL_UNSIGNED_INT, 0);
+
         // glBindVertexArray(0); // no need to unbind it every time
         if (num >= 3.14*9) {
             increasing = false;
@@ -399,13 +405,14 @@ void Graphics::run() {
             num -= speed;
         }
 
+        vertices2[2] += 10;
+
         //glUniform3f(distMoved, -100000, -1000, -1000);
         //glUniform4f(project_trans_mat1, projectionMat.data[0][0], -1000, -1000, );
-        glUniformMatrix4fv(proj_trans_mat, 1, GL_FALSE, &projectionMat.data[0][0]);
         if (z>maxSightDistance) {
             movingAway = false;
         }
-        else if (z < minSightDistance) {
+        else if (z < -minSightDistance) {
             movingAway = true;
         }
         if (movingAway){
@@ -414,8 +421,9 @@ void Graphics::run() {
         else {
             z -= 10;
         }
-        projectionMat.data[3][3] = z;
-        projectionMat.data[3][2] = projectionMat.data[3][3] * (maxSightDistance / (maxSightDistance - minSightDistance)) - ((float)minSightDistance * maxSightDistance) / (maxSightDistance - minSightDistance);
+
+        //projectionMat.data[3][3] = z;
+        //projectionMat.data[3][2] = projectionMat.data[3][3] * (maxSightDistance / (maxSightDistance - minSightDistance)) - ((float)minSightDistance * maxSightDistance) / (maxSightDistance - minSightDistance);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
