@@ -12,7 +12,6 @@ void main() {
     y = input.x * project_trans_matrix[0][1] + input.y * project_trans_matrix[1][1] + input.z * project_trans_matrix[2][1] + project_trans_matrix[3][1];
     z = input.x * project_trans_matrix[0][2] + input.y * project_trans_matrix[1][2] + input.z * project_trans_matrix[2][2] + project_trans_matrix[3][2];
     w = input.x * project_trans_matrix[0][3] + input.y * project_trans_matrix[1][3] + input.z * project_trans_matrix[2][3] + project_trans_matrix[3][3];
-    
     if (w != 0)
     {
         x /= w;
