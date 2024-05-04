@@ -13,6 +13,8 @@
 #include "Math/Triangle.h" 
 #include "Math/Matrix.h"
 
+#include <chrono>
+
 class Graphics {
 public:
     Graphics();
@@ -38,5 +40,6 @@ public:
     void run();
     int cleanup();
 
-    void mutliplyMatVec(Vec3D& input, Vec3D& output, mat4x4& someMatrix);
+    void multiplyMatVec(Vec3D& input, Vec3D& output, mat4x4& someMatrix);
+    void multiplyMatVec(Vec3D& input, Vec3D& output, mat3x3& someMatrix);
 };

@@ -129,46 +129,39 @@ void Graphics::run() {
         }
     }
 
-    /*
     projectionMat.data[0][0] = (aspectRatio * fieldOfView);
     projectionMat.data[1][1] = fieldOfView;
     projectionMat.data[2][2] = maxSightDistance / (maxSightDistance - minSightDistance);
     projectionMat.data[3][2] = -(float)minSightDistance * projectionMat.data[2][2];
     projectionMat.data[2][3] = 1;
     projectionMat.data[3][3] = 0;
-    */
     
-    float x = 0, y = 0, z = 0;
-
-    projectionMat.data[0][0] = aspectRatio * fieldOfView;
-    projectionMat.data[1][1] = fieldOfView;
-    projectionMat.data[2][2] = maxSightDistance / (maxSightDistance - minSightDistance);
-    projectionMat.data[2][3] = 1;
-    projectionMat.data[3][0] = x * aspectRatio * fieldOfView;
-    projectionMat.data[3][1] = y * fieldOfView;
-    projectionMat.data[3][2] = z * (maxSightDistance / (maxSightDistance - minSightDistance)) - ((float)minSightDistance * maxSightDistance) / (maxSightDistance - minSightDistance);
-    projectionMat.data[3][3] = z;
-    
-    Vec3D someTriangle0 = Vec3D(1000.0f, 1000.0f, 1000.0f);
-    Vec3D someTriangle1 = Vec3D(1000.0f, 1000.0f, 0.0f);
-    Vec3D someTriangle2 = Vec3D(1000.0f, 0, 1000.0f);
+    Vec3D v1 = Vec3D(1000.0f, 1000.0f, 1000.0f);
+    Vec3D v2 = Vec3D(1000.0f, 1000.0f, 0.0f);
+    Vec3D v3 = Vec3D(1000.0f, 0, 1000.0f);
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------ 
 
+    struct vertex {
+        short pos[3];
+        unsigned char colour[4];
+    };
 
     float vertices2[] = {
+
          500,  500, 1500,  // top right
          500, -500, 1500,  // bottom right
         -500, -500, 1500,  // bottom left
         -500,  500, 1500,   // top left 
-         500,  1000, 1500,
+         500,  1000, 1500
         //someTriangle0.x, someTriangle0.y, someTriangle0.z,
         //someTriangle1.x, someTriangle1.y, someTriangle1.z,
         //someTriangle2.x, someTriangle2.y, someTriangle2.z
     };
 
-    unsigned int indices[] = {  // note that we start from 0!
+    unsigned int indices[] = {  // note that we start from 0!s
+        
         0, 1, 2,
         2, 3, 0,
         0, 4, 1
@@ -192,7 +185,7 @@ void Graphics::run() {
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+    
     // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -203,18 +196,23 @@ void Graphics::run() {
     // uncomment this call to draw in wireframe polygons.
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    bool increasing = true, movingAway = true;
+    bool increasing = true;
     float num = 0;
     float speed = 0.1;
 
-    int coolDown = 0;
+    float theta, beta;
 
     int colourLocation, proj_trans_mat, state;
 
-    double cx, cy, nx, ny;
+    double cx, cy, nx, ny, x = 0, y = 0, z=0;
     glfwGetCursorPos(window, &cx, &cy);
 
+    Vec3D CurrView = Vec3D(0, 0, 1);
+    Vec3D NewView = Vec3D(0, 0, 1);
+
+
     while (!glfwWindowShouldClose(window)) {
+        
         glfwGetCursorPos(window, &nx, &ny);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), &vertices2, GL_DYNAMIC_DRAW);
@@ -231,7 +229,7 @@ void Graphics::run() {
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //glDrawArrays(GL_TRIANGLES, 0, 6);
         glUniformMatrix4fv(proj_trans_mat, 1, GL_FALSE, &projectionMat.data[0][0]);
-        glDrawElements(GL_TRIANGLES, 3*3, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 3*5, GL_UNSIGNED_INT, 0);
 
         // glBindVertexArray(0); // no need to unbind it every time
         if (num >= 3.14*9) {
@@ -270,21 +268,34 @@ void Graphics::run() {
         if (state == GLFW_PRESS)
             y -= 100;
 
-        if (nx != cx) {
+        for (int index = 0; index < 5; index++) {
+            vertices2[3 * index] += x;
+            vertices2[3 * index + 1] += y;
+            vertices2[3 * index + 2] += z;
+        }
+
+        x = 0;
+        y = 0;
+        z = 0;
+                
+        theta = ((nx - cx) / screenWidth) * 2 * pi * 3;
+        //beta = std::max(std::min(((ny - cy) / screenWidth) * 2 * pi * 3, (double)pi / 2), (double)-pi / 2);
+        beta = ((ny - cy) / screenWidth) * 2 * pi * 3;
+
+        float oldBeta, oldTheta;
+
+        if (beta != 0 or theta != 0) {
             for (int index = 0; index < 5; index++) {
-                float oldAngle = atan((vertices2[index * 3]) / (vertices2[index * 3 + 2]));
-                float newAngle = oldAngle + ((nx - cx) / screenWidth) * 2 * pi * 3;
-                float oldX = vertices2[index * 3], oldZ = vertices2[index * 3 + 2];
-                vertices2[index * 3] = sin(newAngle)*oldX/sin(oldAngle);
-                vertices2[index * 3 + 2] = cos(newAngle) * oldZ / cos(oldAngle);
+                oldTheta = atan(vertices2[3 * index + 2] / vertices2[3 * index]);
+                oldBeta = atan(vertices2[3 * index + 1] / (vertices2[3 * index + 2]/sin(abs(oldTheta))));
+                vertices2[3 * index] *= cos(theta + oldTheta)/cos(oldTheta);
+                vertices2[3 * index + 1] *= sin(beta + oldBeta)/sin(oldBeta);
+                vertices2[3 * index + 2] *= sin(theta + oldTheta) / sin(oldTheta);
             }
         }
 
-        projectionMat.data[3][0] = x * aspectRatio * fieldOfView;
-        projectionMat.data[3][1] = y * fieldOfView;
-        projectionMat.data[3][2] = z * (maxSightDistance / (maxSightDistance - minSightDistance)) - ((float)minSightDistance * maxSightDistance) / (maxSightDistance - minSightDistance);
-        projectionMat.data[3][3] = z;
         cx = nx;
+        cy = ny;
     }
 }
 
@@ -292,7 +303,7 @@ int Graphics::cleanup() {
     return 0;
 };
 
-void Graphics::mutliplyMatVec(Vec3D& input, Vec3D& output, mat4x4& someMatrix) {
+void Graphics::multiplyMatVec(Vec3D& input, Vec3D& output, mat4x4& someMatrix) {
     output.x = input.x * someMatrix.data[0][0] + input.y * someMatrix.data[1][0] + input.z * someMatrix.data[2][0] + someMatrix.data[3][0];
     output.y = input.x * someMatrix.data[0][1] + input.y * someMatrix.data[1][1] + input.z * someMatrix.data[2][1] + someMatrix.data[3][1];
     output.z = input.x * someMatrix.data[0][2] + input.y * someMatrix.data[1][2] + input.z * someMatrix.data[2][2] + someMatrix.data[3][2];
@@ -302,4 +313,10 @@ void Graphics::mutliplyMatVec(Vec3D& input, Vec3D& output, mat4x4& someMatrix) {
         output.y /= w;
         output.z /= w;
     }
+}
+
+void Graphics::multiplyMatVec(Vec3D& input, Vec3D& output, mat3x3& someMatrix) {
+    output.x = input.x * someMatrix.data[0][0] + input.y * someMatrix.data[1][0] + input.z * someMatrix.data[2][0];
+    output.y = input.x * someMatrix.data[0][1] + input.y * someMatrix.data[1][1] + input.z * someMatrix.data[2][1];
+    output.z = input.x * someMatrix.data[0][2] + input.y * someMatrix.data[1][2] + input.z * someMatrix.data[2][2];
 }

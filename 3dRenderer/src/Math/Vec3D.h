@@ -7,4 +7,8 @@ public:
 	Vec3D(const Vec3D&someCoord);
 	Vec3D(float someX, float someY, float someZ);
 	~Vec3D();
+
+	Vec3D operator*(Vec3D other);
+
+	float Magnitude();
 };
