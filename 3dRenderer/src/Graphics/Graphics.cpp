@@ -160,11 +160,21 @@ void Graphics::run() {
         //someTriangle2.x, someTriangle2.y, someTriangle2.z
     };
 
+    float vertices[1000] = {
+        500,  500, 1500,  // top right
+         500, -500, 1500,  // bottom right
+        -500, -500, 1500,  // bottom left
+        -500,  500, 1500,   // top left 
+         500,  1000, 1500
+    };
+    
+    int counter = 15;
+
     unsigned int indices[] = {  // note that we start from 0!s
         
         0, 1, 2,
         2, 3, 0,
-        0, 4, 1
+        0, 4, 2
     };
 
     unsigned int VBO, VAO, EBO;
@@ -267,32 +277,35 @@ void Graphics::run() {
         state = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
         if (state == GLFW_PRESS)
             y -= 100;
+                
+        theta = ((nx - cx) / screenWidth) * 2 * pi * 5;
+        beta = ((ny - cy) / screenHeight) * 2 * pi * 5;
+
+        float oldBeta, oldTheta;
+
+        for (int index = 0; index < counter; index++) {
+            vertices2[index] = vertices[index];
+        }
+
+        if (beta != 0 or theta != 0) {
+            for (int index = 0; index < 5; index++) {
+                oldTheta = atan(vertices2[3 * index + 2] / vertices2[3 * index]);
+                oldBeta = atan(vertices2[3 * index + 1] / (vertices2[3 * index + 2] / sin(abs(oldTheta))));
+                vertices[3 * index    ] *= cos(theta + oldTheta) / cos(oldTheta);
+                vertices[3 * index + 1] *= sin(beta  + oldBeta ) / sin(oldBeta );
+                vertices[3 * index + 2] *= sin(theta + oldTheta) / sin(oldTheta);
+            }
+        }
 
         for (int index = 0; index < 5; index++) {
-            vertices2[3 * index] += x;
-            vertices2[3 * index + 1] += y;
-            vertices2[3 * index + 2] += z;
+            vertices[3 * index] += x;
+            vertices[3 * index + 1] += y;
+            vertices[3 * index + 2] += z;
         }
 
         x = 0;
         y = 0;
         z = 0;
-                
-        theta = ((nx - cx) / screenWidth) * 2 * pi * 3;
-        //beta = std::max(std::min(((ny - cy) / screenWidth) * 2 * pi * 3, (double)pi / 2), (double)-pi / 2);
-        beta = ((ny - cy) / screenWidth) * 2 * pi * 3;
-
-        float oldBeta, oldTheta;
-
-        if (beta != 0 or theta != 0) {
-            for (int index = 0; index < 5; index++) {
-                oldTheta = atan(vertices2[3 * index + 2] / vertices2[3 * index]);
-                oldBeta = atan(vertices2[3 * index + 1] / (vertices2[3 * index + 2]/sin(abs(oldTheta))));
-                vertices2[3 * index] *= cos(theta + oldTheta)/cos(oldTheta);
-                vertices2[3 * index + 1] *= sin(beta + oldBeta)/sin(oldBeta);
-                vertices2[3 * index + 2] *= sin(theta + oldTheta) / sin(oldTheta);
-            }
-        }
 
         cx = nx;
         cy = ny;
